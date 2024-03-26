@@ -1,45 +1,24 @@
-const fs = require("fs");
-const csv = require("csv-parser");
-let matchingRows = [];
 
-// Function to retrieve data for a specific registration number and student name
-function getDataForRegNoAndName(regNo, name, callback) {
-  // Array to store matching rows
-  matchingRows = [];
+export async function getAllData() {
+  const response = await fetch('./data.csv');
+  const csvData = await response.text();
 
-  // Reading the CSV file........... change the csv file path
-  fs.createReadStream("E:\\sep3\\data.csv")
-    .pipe(csv())
-    .on("data", (row) => {
-      // Convert the student name to lowercase and compare
-      const lowercaseName = row["Student Name"].toLowerCase();
-      if (row["Reg No"] === regNo || lowercaseName === name.toLowerCase()) {
-        // Store the matching row as an object in the matchingRows array
-        matchingRows.push({
-          "Reg No": row["Reg No"],
-          "Student Name": row["Student Name"],
-          "Subject Name": row["Subject Name"],
-          "Subject Code": row["Subject Code"],
-          Amount: row["Amount"],
-        });
+  const rows = csvData.split('\n');
+  const headers = rows[0].split(',');
+  const allRows = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i].split(',');
+    
+    // Check if the row is defined and has the expected number of columns
+    if (row && row.length === headers.length) {
+      const rowData = {};
+      for (let j = 0; j < headers.length; j++) {
+        rowData[headers[j].trim()] = row[j].trim();
       }
-    })
-    .on("end", () => {
-      console.log("CSV file successfully processed");
-      // Call the callback function with the matchingRows array
-      callback(matchingRows);
-    });
+      allRows.push(rowData);
+    }
+  }
+  console.log(allRows)
+  return allRows;
 }
-
-// Example usage: Retrieving data for a specific registration number and student name
-getDataForRegNoAndName("211801390016", "rajendra pacha", (matchingRows) => {
-  console.log(matchingRows);
-});
-
-console.log(matchingRows);
-
-module.exports = {
-  matchingRows,
-  getDataForRegNoAndName,
-};
-
